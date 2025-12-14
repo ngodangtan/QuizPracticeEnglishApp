@@ -15,10 +15,13 @@ public class LoginPanel extends JPanel {
     private final JButton loginBtn = new JButton("Login");
     private final JButton registerBtn = new JButton("Create account");
     private final JLabel errorLabel = new JLabel(" "); // giữ chỗ cho layout
+    private final CircularProgressBar loadingSpinner = new CircularProgressBar();
 
     public LoginPanel() {
         setLayout(new BorderLayout());
         setBorder(new EmptyBorder(22, 22, 22, 22));
+
+        loadingSpinner.setVisible(false);
 
         add(buildHeader(), BorderLayout.NORTH);
         add(buildForm(), BorderLayout.CENTER);
@@ -75,6 +78,11 @@ public class LoginPanel extends JPanel {
         g.gridy = row++;
         g.insets = new Insets(0, 0, 8, 0);
         p.add(showPassword, g);
+
+        // loading spinner
+        g.gridy = row++;
+        g.insets = new Insets(0, 0, 8, 0);
+        p.add(loadingSpinner, g);
 
         // buttons
         JPanel btnRow = new JPanel(new GridLayout(1, 2, 10, 0));
@@ -140,6 +148,11 @@ public class LoginPanel extends JPanel {
                 return;
             }
 
+            // Show loading and disable button
+            loadingSpinner.setVisible(true);
+            loadingSpinner.start();
+            loginBtn.setEnabled(false);
+
             // Call API
             new SwingWorker<ApiClient.LoginResponse, Void>() {
                 @Override
@@ -149,6 +162,11 @@ public class LoginPanel extends JPanel {
 
                 @Override
                 protected void done() {
+                    // Hide loading and enable button
+                    loadingSpinner.setVisible(false);
+                    loadingSpinner.stop();
+                    loginBtn.setEnabled(true);
+
                     try {
                         ApiClient.LoginResponse res = get();
                         if (res.success) {
