@@ -2,17 +2,20 @@ package org.uit.ui;
 
 import javax.swing.*;
 
-public class RegisterFrame extends JFrame {
+public class HomeFrame extends JFrame {
 
-    public RegisterFrame() {
-        super("English Quiz - Register");
+    private final String username;
 
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        setSize(520, 420);
+    public HomeFrame(String username) {
+        super("English Quiz - Home");
+        this.username = username;
+
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setSize(520, 360);
         setLocationRelativeTo(null);
         setResizable(false);
 
-        setContentPane(new RegisterPanel());
+        setContentPane(new HomePanel(username, this));
 
         // Native look
         try {

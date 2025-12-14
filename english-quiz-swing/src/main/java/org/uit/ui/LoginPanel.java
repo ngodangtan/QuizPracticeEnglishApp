@@ -19,7 +19,6 @@ public class LoginPanel extends JPanel {
 
         add(buildHeader(), BorderLayout.NORTH);
         add(buildForm(), BorderLayout.CENTER);
-        add(buildFooter(), BorderLayout.SOUTH);
 
         wireEvents();
     }
@@ -138,11 +137,22 @@ public class LoginPanel extends JPanel {
                 return;
             }
 
-            JOptionPane.showMessageDialog(this, "Login clicked (UI only).");
+            // Simulate successful login
+            SwingUtilities.invokeLater(() -> {
+                new HomeFrame(email).setVisible(true);
+
+                Window w = SwingUtilities.getWindowAncestor(this);
+                if (w != null) w.dispose();
+            });
         });
 
         registerBtn.addActionListener(e -> {
-            JOptionPane.showMessageDialog(this, "Go to Register screen (next step).");
+            SwingUtilities.invokeLater(() -> {
+                new RegisterFrame().setVisible(true);
+
+                Window w = SwingUtilities.getWindowAncestor(this);
+                if (w != null) w.dispose();
+            });
         });
     }
 
