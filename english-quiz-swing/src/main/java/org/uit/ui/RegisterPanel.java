@@ -1,26 +1,36 @@
 package org.uit.ui;
 
+import org.uit.ApiClient;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.util.concurrent.ExecutionException;
 
 public class RegisterPanel extends JPanel {
 
     private final JTextField usernameField = new JTextField();
     private final JTextField fullNameField = new JTextField();
+    private final JTextField emailField = new JTextField();
     private final JPasswordField passwordField = new JPasswordField();
     private final JCheckBox showPassword = new JCheckBox("Show password");
 
     private final JButton createBtn = new JButton("Create account");
     private final JButton backBtn = new JButton("Back to login");
     private final JLabel errorLabel = new JLabel(" ");
+    private final CircularProgressBar loadingSpinner = new CircularProgressBar();
 
     public RegisterPanel() {
         setLayout(new BorderLayout());
         setBorder(new EmptyBorder(22, 22, 22, 22));
 
+        loadingSpinner.setVisible(false);
+
         add(buildHeader(), BorderLayout.NORTH);
-        add(buildForm(), BorderLayout.CENTER);
+        JScrollPane scroll = new JScrollPane(buildForm());
+        scroll.setBorder(null);
+        scroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        add(scroll, BorderLayout.CENTER);
 
         wireEvents();
     }
@@ -45,45 +55,36 @@ public class RegisterPanel extends JPanel {
     }
 
     private JComponent buildForm() {
-        JPanel p = new JPanel(new GridBagLayout());
+        JPanel p = new JPanel();
         p.setOpaque(false);
+        p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
 
-        GridBagConstraints g = new GridBagConstraints();
-        g.gridx = 0;
-        g.weightx = 1;
-        g.fill = GridBagConstraints.HORIZONTAL;
-        g.insets = new Insets(8, 0, 8, 0);
-
-        int row = 0;
-
-        g.gridy = row++;
-        p.add(labeledField("Username", usernameField), g);
-
-        g.gridy = row++;
-        p.add(labeledField("Full name", fullNameField), g);
-
-        g.gridy = row++;
-        p.add(labeledField("Password", passwordField), g);
+        p.add(labeledField("Username", usernameField));
+        p.add(Box.createVerticalStrut(8));
+        p.add(labeledField("Full name", fullNameField));
+        p.add(Box.createVerticalStrut(8));
+        p.add(labeledField("Email", emailField));
+        p.add(Box.createVerticalStrut(8));
+        p.add(labeledField("Password", passwordField));
+        p.add(Box.createVerticalStrut(8));
 
         errorLabel.setForeground(new Color(200, 60, 60));
         errorLabel.setFont(errorLabel.getFont().deriveFont(12f));
-        g.gridy = row++;
-        g.insets = new Insets(0, 0, 8, 0);
-        p.add(errorLabel, g);
+        p.add(errorLabel);
+        p.add(Box.createVerticalStrut(8));
 
         showPassword.setOpaque(false);
-        g.gridy = row++;
-        g.insets = new Insets(0, 0, 8, 0);
-        p.add(showPassword, g);
+        p.add(showPassword);
+        p.add(Box.createVerticalStrut(8));
 
-        JPanel btnRow = new JPanel(new GridLayout(1, 2, 10, 0));
+        p.add(loadingSpinner);
+        p.add(Box.createVerticalStrut(14));
+
+        JPanel btnRow = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
         btnRow.setOpaque(false);
         btnRow.add(backBtn);
         btnRow.add(createBtn);
-
-        g.gridy = row++;
-        g.insets = new Insets(14, 0, 0, 0);
-        p.add(btnRow, g);
+        p.add(btnRow);
 
         return p;
     }
@@ -96,7 +97,8 @@ public class RegisterPanel extends JPanel {
         JLabel l = new JLabel(label);
         l.setFont(l.getFont().deriveFont(13f));
 
-        field.setPreferredSize(new Dimension(10, 34));
+        field.setPreferredSize(new Dimension(200, 34));
+        field.setMaximumSize(new Dimension(Integer.MAX_VALUE, 34));
 
         wrap.add(l);
         wrap.add(Box.createVerticalStrut(6));
@@ -124,9 +126,10 @@ public class RegisterPanel extends JPanel {
 
             String username = usernameField.getText().trim();
             String fullName = fullNameField.getText().trim();
+            String email = emailField.getText().trim();
             String pass = new String(passwordField.getPassword()).trim();
 
-            if (username.isEmpty() || fullName.isEmpty() || pass.isEmpty()) {
+            if (username.isEmpty() || fullName.isEmpty() || email.isEmpty() || pass.isEmpty()) {
                 setError("Please fill in all fields.");
                 return;
             }
@@ -134,20 +137,51 @@ public class RegisterPanel extends JPanel {
                 setError("Username must not contain spaces.");
                 return;
             }
+            if (!email.contains("@")) {
+                setError("Email format looks invalid.");
+                return;
+            }
             if (pass.length() < 6) {
                 setError("Password must be at least 6 characters.");
                 return;
             }
 
-            JOptionPane.showMessageDialog(this,
-                    "Account created (UI only)\n\nUsername: " + username +
-                            "\nFull name: " + fullName,
-                    "Register",
-                    JOptionPane.INFORMATION_MESSAGE);
+            // Show loading and disable button
+            loadingSpinner.setVisible(true);
+            loadingSpinner.start();
+            createBtn.setEnabled(false);
 
-            new LoginFrame().setVisible(true);
-            Window w = SwingUtilities.getWindowAncestor(this);
-            if (w != null) w.dispose();
+            // Call API
+            new SwingWorker<ApiClient.RegisterResponse, Void>() {
+                @Override
+                protected ApiClient.RegisterResponse doInBackground() throws Exception {
+                    return ApiClient.register(fullName, username, email, pass);
+                }
+
+                @Override
+                protected void done() {
+                    // Hide loading and enable button
+                    loadingSpinner.setVisible(false);
+                    loadingSpinner.stop();
+                    createBtn.setEnabled(true);
+
+                    try {
+                        ApiClient.RegisterResponse res = get();
+                        if (res.success) {
+                            SwingUtilities.invokeLater(() -> {
+                                new LoginFrame().setVisible(true);
+
+                                Window w = SwingUtilities.getWindowAncestor(RegisterPanel.this);
+                                if (w != null) w.dispose();
+                            });
+                        } else {
+                            setError(res.message);
+                        }
+                    } catch (InterruptedException | ExecutionException ex) {
+                        setError("Registration failed: " + ex.getCause().getMessage());
+                    }
+                }
+            }.execute();
         });
     }
 
