@@ -1,8 +1,11 @@
 package org.uit.ui;
 
+import org.uit.ApiClient;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.util.concurrent.ExecutionException;
 
 public class LoginPanel extends JPanel {
 
@@ -137,13 +140,32 @@ public class LoginPanel extends JPanel {
                 return;
             }
 
-            // Simulate successful login
-            SwingUtilities.invokeLater(() -> {
-                new HomeFrame(email).setVisible(true);
+            // Call API
+            new SwingWorker<ApiClient.LoginResponse, Void>() {
+                @Override
+                protected ApiClient.LoginResponse doInBackground() throws Exception {
+                    return ApiClient.login(email, pass);
+                }
 
-                Window w = SwingUtilities.getWindowAncestor(this);
-                if (w != null) w.dispose();
-            });
+                @Override
+                protected void done() {
+                    try {
+                        ApiClient.LoginResponse res = get();
+                        if (res.success) {
+                            SwingUtilities.invokeLater(() -> {
+                                new HomeFrame(res.user.username).setVisible(true);
+
+                                Window w = SwingUtilities.getWindowAncestor(LoginPanel.this);
+                                if (w != null) w.dispose();
+                            });
+                        } else {
+                            setError(res.message);
+                        }
+                    } catch (InterruptedException | ExecutionException ex) {
+                        setError("Login failed: " + ex.getCause().getMessage());
+                    }
+                }
+            }.execute();
         });
 
         registerBtn.addActionListener(e -> {
