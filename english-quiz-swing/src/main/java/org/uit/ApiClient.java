@@ -5,10 +5,15 @@ import okhttp3.*;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 public class ApiClient {
     private static final String BASE_URL = "http://localhost:3000";
-    private static final OkHttpClient client = new OkHttpClient();
+    private static final OkHttpClient client = new OkHttpClient.Builder()
+            .readTimeout(5, TimeUnit.MINUTES)
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
+            .build();
     private static final Gson gson = new Gson();
 
     public static class LoginResponse {
@@ -54,6 +59,30 @@ public class ApiClient {
             }
             String responseBody = response.body().string();
             return gson.fromJson(responseBody, RegisterResponse.class);
+        }
+    }
+
+    public static class Question {
+        public String question;
+        public Map<String, String> Choice;
+        public String Correct;
+    }
+
+    public static Question[] generateQuiz(String level) throws IOException {
+        String json = gson.toJson(Map.of("level", level));
+
+        RequestBody body = RequestBody.create(json, MediaType.get("application/json; charset=utf-8"));
+        Request request = new Request.Builder()
+                .url(BASE_URL + "/api/quiz/generate-quiz")
+                .post(body)
+                .build();
+
+        try (Response response = client.newCall(request).execute()) {
+            if (!response.isSuccessful()) {
+                throw new IOException("Unexpected code " + response);
+            }
+            String responseBody = response.body().string();
+            return gson.fromJson(responseBody, Question[].class);
         }
     }
 

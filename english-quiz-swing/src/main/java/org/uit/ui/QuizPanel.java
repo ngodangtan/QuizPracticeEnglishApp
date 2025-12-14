@@ -1,5 +1,7 @@
 package org.uit.ui;
 
+import org.uit.ApiClient;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
@@ -7,6 +9,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class QuizPanel extends JPanel {
 
@@ -14,9 +17,9 @@ public class QuizPanel extends JPanel {
     private final String level;
     private final QuizFrame quizFrame;
 
-    // Quiz data (simulated, replace with API later)
-    private final List<Question> questions = generateQuestions();
-    private final int[] userAnswers = new int[questions.size()]; // -1 means not answered
+    // Quiz data from API
+    private final List<Question> questions = new ArrayList<>();
+    private final int[] userAnswers; // 0=A, 1=B, 2=C, 3=D, -1 not answered
     private int currentQuestionIndex = 0;
 
     // UI components
@@ -32,10 +35,19 @@ public class QuizPanel extends JPanel {
     private Timer quizTimer;
     private int timeRemaining = 1200; // 20 minutes in seconds
 
-    public QuizPanel(String username, String level, QuizFrame quizFrame) {
+    public QuizPanel(String username, String level, QuizFrame quizFrame, ApiClient.Question[] apiQuestions) {
         this.username = username;
         this.level = level;
         this.quizFrame = quizFrame;
+
+        // Convert API questions to local Question
+        for (ApiClient.Question q : apiQuestions) {
+            String[] options = {q.Choice.get("A"), q.Choice.get("B"), q.Choice.get("C"), q.Choice.get("D")};
+            int correctIndex = q.Correct.charAt(0) - 'A'; // A=0, B=1, etc.
+            questions.add(new Question(q.question, options, correctIndex));
+        }
+
+        this.userAnswers = new int[questions.size()];
 
         // Initialize userAnswers to -1
         for (int i = 0; i < userAnswers.length; i++) {
@@ -202,17 +214,7 @@ public class QuizPanel extends JPanel {
         });
     }
 
-    // Simulated questions
-    private List<Question> generateQuestions() {
-        List<Question> list = new ArrayList<>();
-        for (int i = 1; i <= 20; i++) {
-            String q = "Sample question " + i + " for level " + level + "?";
-            String[] opts = {"Option A", "Option B", "Option C", "Option D"};
-            int correct = (int) (Math.random() * 4); // Random correct answer
-            list.add(new Question(q, opts, correct));
-        }
-        return list;
-    }
+    // Simulated questions - removed, now from API
 
     private static class Question {
         String question;

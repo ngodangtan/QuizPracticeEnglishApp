@@ -1,10 +1,13 @@
 package org.uit.ui;
 
+import org.uit.ApiClient;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.concurrent.ExecutionException;
 
 public class LoadingPanel extends JPanel {
 
@@ -48,16 +51,31 @@ public class LoadingPanel extends JPanel {
     }
 
     private void startLoading() {
-        // Simulate loading time, later replace with actual API calls
-        Timer timer = new Timer(3000, e -> {
-            // After loading, transition to quiz screen
-            SwingUtilities.invokeLater(() -> {
-                new QuizFrame(username, level).setVisible(true);
-                loadingFrame.dispose();
-            });
-        });
-        timer.setRepeats(false);
-        timer.start();
+        // Call API to generate quiz
+        new SwingWorker<ApiClient.Question[], Void>() {
+            @Override
+            protected ApiClient.Question[] doInBackground() throws Exception {
+                return ApiClient.generateQuiz(level);
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    ApiClient.Question[] questions = get();
+                    SwingUtilities.invokeLater(() -> {
+                        new QuizFrame(username, level, questions).setVisible(true);
+                        loadingFrame.dispose();
+                    });
+                } catch (InterruptedException | ExecutionException ex) {
+                    JOptionPane.showMessageDialog(LoadingPanel.this, "Failed to load quiz: " + ex.getCause().getMessage());
+                    // Go back to home
+                    SwingUtilities.invokeLater(() -> {
+                        new HomeFrame(username).setVisible(true);
+                        loadingFrame.dispose();
+                    });
+                }
+            }
+        }.execute();
     }
 
     // Custom spinner component
