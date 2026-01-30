@@ -10,7 +10,7 @@ public class HomePanel extends JPanel {
     private final HomeFrame homeFrame;
     private final JTextField levelField = new JTextField();
     private final JButton startTestBtn = new JButton("Start Test");
-    private final JButton viewHistoryBtn = new JButton("View History");
+    private final JButton viewHistoryBtn = new JButton("View Score History");
     private final JButton profileBtn = new JButton("Profile");
     private final JButton logoutBtn = new JButton("Logout");
 
