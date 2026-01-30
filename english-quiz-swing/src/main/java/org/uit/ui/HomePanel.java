@@ -11,6 +11,7 @@ public class HomePanel extends JPanel {
     private final JTextField levelField = new JTextField();
     private final JButton startTestBtn = new JButton("Start Test");
     private final JButton logoutBtn = new JButton("Logout");
+    private final JButton viewHistoryBtn = new JButton("Xem lịch sử");
 
     public HomePanel(String username, HomeFrame homeFrame) {
         this.username = username;
@@ -60,9 +61,10 @@ public class HomePanel extends JPanel {
         p.add(labeledField("English Level (e.g., A1, B2, C1)", levelField), g);
 
         // buttons
-        JPanel btnRow = new JPanel(new GridLayout(1, 2, 10, 0));
+        JPanel btnRow = new JPanel(new GridLayout(1, 3, 10, 0));
         btnRow.setOpaque(false);
         btnRow.add(startTestBtn);
+        btnRow.add(viewHistoryBtn);
         btnRow.add(logoutBtn);
 
         g.gridy = row++;
