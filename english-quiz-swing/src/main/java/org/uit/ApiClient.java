@@ -4,6 +4,8 @@ import com.google.gson.Gson;
 import okhttp3.*;
 
 import java.io.IOException;
+//import java.io.OutputStream;
+//import java.net.HttpURLConnection;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -103,4 +105,36 @@ public class ApiClient {
             return gson.fromJson(responseBody, LoginResponse.class);
         }
     }
+
+    public static boolean changePassword(String userId, String newPassword, String token) throws IOException {
+
+        
+        String json = gson.toJson(Map.of(
+                "newPassword", newPassword
+        ));
+
+        RequestBody body = RequestBody.create(
+                json,
+                MediaType.get("application/json; charset=utf-8")
+        );
+
+        Request request = new Request.Builder()
+                .url(BASE_URL + "/api/auth/change-password")
+                .put(body)
+                .addHeader("Authorization", "Bearer " + token)
+                .build();
+
+        try (Response response = client.newCall(request).execute()) {
+            if (!response.isSuccessful()) {
+                String err = response.body() != null ? response.body().string() : "no body";
+                System.err.println("Change password failed: " + response.code());
+                System.err.println("Response body: " + err);
+                return false;
+            }
+            return true;
+        }
+    }
+
+
+
 }
