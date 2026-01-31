@@ -9,7 +9,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class QuizPanel extends JPanel {
 
@@ -206,17 +205,26 @@ public class QuizPanel extends JPanel {
             }
         }
         double percentage = (double) correct / questions.size() * 100;
-        JOptionPane.showMessageDialog(this, "Quiz completed!\nCorrect answers: " + correct + "/" + questions.size() + "\nScore: " + String.format("%.1f", percentage) + "%");
-        // Go back to home
+        String message = "Quiz completed!\nCorrect answers: " + correct + "/" + questions.size() + "\nScore: " + String.format("%.1f", percentage) + "%";
+        String[] options = { "Xem lại câu trả lời", "Về trang chủ" };
+        int choice = JOptionPane.showOptionDialog(this, message, "Quiz completed", JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, options[1]);
+        if (choice == 0) {
+            ReviewAnswersDialog review = new ReviewAnswersDialog(quizFrame, questions, userAnswers, this::goToHome);
+            review.setVisible(true);
+        } else {
+            goToHome();
+        }
+    }
+
+    private void goToHome() {
         SwingUtilities.invokeLater(() -> {
             new HomeFrame(username).setVisible(true);
             quizFrame.dispose();
         });
     }
 
-    // Simulated questions - removed, now from API
-
-    private static class Question {
+    /** Used by QuizPanel and ReviewAnswersDialog. */
+    public static class Question {
         String question;
         String[] options;
         int correctIndex;

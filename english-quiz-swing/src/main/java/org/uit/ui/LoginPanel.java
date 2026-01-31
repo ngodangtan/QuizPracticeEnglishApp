@@ -6,6 +6,7 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.util.concurrent.ExecutionException;
+import org.uit.session.Session;
 
 public class LoginPanel extends JPanel {
 
@@ -170,6 +171,12 @@ public class LoginPanel extends JPanel {
                     try {
                         ApiClient.LoginResponse res = get();
                         if (res.success) {
+                             // ✅ LƯU THÔNG TIN USER VÀO SESSION
+                            Session.setUserId(res.user._id);
+                            Session.setName(res.user.username);
+                            Session.setEmail(res.user.email);
+                            Session.setToken(res.token); // nếu backend trả token
+
                             SwingUtilities.invokeLater(() -> {
                                 new HomeFrame(res.user.username).setVisible(true);
 

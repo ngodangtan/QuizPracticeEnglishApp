@@ -1,6 +1,8 @@
 package org.uit.ui;
 
 import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 public class HomeFrame extends JFrame {
 
@@ -22,5 +24,18 @@ public class HomeFrame extends JFrame {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
             SwingUtilities.updateComponentTreeUI(this);
         } catch (Exception ignored) {}
+
+        initializeUI();
+    }
+
+    private void initializeUI() {
+        JButton profileButton = new JButton("Profile");
+        profileButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                new ProfileFrame();
+            }
+        });
+        // Add profileButton to your layout
     }
 }

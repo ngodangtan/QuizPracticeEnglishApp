@@ -3,6 +3,7 @@ package org.uit.ui;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import org.uit.ui.ProfileFrame;
 
 public class HomePanel extends JPanel {
 
@@ -113,8 +114,9 @@ public class HomePanel extends JPanel {
             });
         });
 
+        
         profileBtn.addActionListener(e -> {
-            JOptionPane.showMessageDialog(this, "Profile feature is not implemented yet.");
+            SwingUtilities.invokeLater(ProfileFrame::new);
         });
     }
 }
