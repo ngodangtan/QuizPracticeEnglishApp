@@ -18,9 +18,9 @@ public class ProfileFrame extends JFrame {
 
     public ProfileFrame() {
         setTitle("Profile");
-        setSize(400, 300);
+        setSize(400, 320);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        setLayout(new GridLayout(5, 2));
+        setLayout(new GridLayout(6, 2));
 
         // Name
         add(new JLabel("Name:"));
@@ -33,6 +33,12 @@ public class ProfileFrame extends JFrame {
         emailField = new JTextField(Session.getEmail());
         emailField.setEditable(false);
         add(emailField);
+
+        // Recent Score
+        add(new JLabel("Recent Score:"));
+        JTextField recentScoreField = new JTextField(Session.getRecentScore() != null && !Session.getRecentScore().isEmpty() ? Session.getRecentScore() : "--");
+        recentScoreField.setEditable(false);
+        add(recentScoreField);
 
         // Password (with show/hide button)
         add(new JLabel("New Password:"));

@@ -36,14 +36,17 @@ public class LoginController {
                 listener.onComplete();
                 try {
                     ApiClient.LoginResponse res = get();
-                    if (res.success) {
+                    if (res.success && res.user != null) {
                         // update session model
                         org.uit.session.Session.setUserId(res.user._id);
                         org.uit.session.Session.setName(res.user.username);
                         org.uit.session.Session.setEmail(res.user.email);
                         org.uit.session.Session.setToken(res.token);
+                        org.uit.session.Session.setRecentScore(res.user.recentScore != null ? res.user.recentScore : null);
 
                         listener.onSuccess(res);
+                    } else if (res.success) {
+                        listener.onError("Invalid response from server");
                     } else {
                         listener.onError(res.message);
                     }

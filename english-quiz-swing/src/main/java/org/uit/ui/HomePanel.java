@@ -4,6 +4,7 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import org.uit.navigation.AppCoordinator;
+import org.uit.session.Session;
 import org.uit.ui.ProfileFrame;
 
 public class HomePanel extends JPanel {
@@ -12,7 +13,7 @@ public class HomePanel extends JPanel {
     private final HomeFrame homeFrame;
     private final JTextField levelField = new JTextField();
     private final JButton startTestBtn = new JButton("Start Test");
-    private final JButton viewHistoryBtn = new JButton("History");
+    private final JButton viewRecentScoreBtn = new JButton("View Recent Score");
     private final JButton profileBtn = new JButton("Profile");
     private final JButton logoutBtn = new JButton("Logout");
 
@@ -41,9 +42,16 @@ public class HomePanel extends JPanel {
         sub.setForeground(new Color(120, 120, 120));
         sub.setFont(sub.getFont().deriveFont(13f));
 
+        String scoreText = Session.getRecentScore();
+        JLabel recentScoreLabel = new JLabel("Recent Score: " + (scoreText != null && !scoreText.isEmpty() ? scoreText : "--"));
+        recentScoreLabel.setForeground(new Color(60, 120, 180));
+        recentScoreLabel.setFont(recentScoreLabel.getFont().deriveFont(Font.BOLD, 14f));
+
         p.add(title);
         p.add(Box.createVerticalStrut(6));
         p.add(sub);
+        p.add(Box.createVerticalStrut(6));
+        p.add(recentScoreLabel);
         p.add(Box.createVerticalStrut(16));
         return p;
     }
@@ -67,7 +75,7 @@ public class HomePanel extends JPanel {
         JPanel btnRow = new JPanel(new GridLayout(1, 4, 10, 0));
         btnRow.setOpaque(false);
         btnRow.add(startTestBtn);
-        btnRow.add(viewHistoryBtn);
+        btnRow.add(viewRecentScoreBtn);
         btnRow.add(profileBtn);
         btnRow.add(logoutBtn);
 
@@ -113,6 +121,15 @@ public class HomePanel extends JPanel {
         
         profileBtn.addActionListener(e -> {
             AppCoordinator.getInstance().showProfile(username, null);
+        });
+
+        viewRecentScoreBtn.addActionListener(e -> {
+            String recentScore = Session.getRecentScore();
+            if (recentScore != null && !recentScore.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Your recent score: " + recentScore, "Recent Score", JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                JOptionPane.showMessageDialog(this, "No recent score yet.\nComplete a quiz to see your score here.", "Recent Score", JOptionPane.INFORMATION_MESSAGE);
+            }
         });
     }
 }
