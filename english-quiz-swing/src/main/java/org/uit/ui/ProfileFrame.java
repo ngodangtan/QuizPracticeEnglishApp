@@ -12,12 +12,15 @@ public class ProfileFrame extends JFrame {
     private JTextField nameField;
     private JTextField emailField;
     private JPasswordField passwordField;
+    private JPasswordField confirmPasswordField;
+    private JToggleButton showPasswordBtn;
+    private JToggleButton showConfirmBtn;
 
     public ProfileFrame() {
         setTitle("Profile");
         setSize(400, 300);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        setLayout(new GridLayout(4, 2));
+        setLayout(new GridLayout(5, 2));
 
         // Name
         add(new JLabel("Name:"));
@@ -31,10 +34,49 @@ public class ProfileFrame extends JFrame {
         emailField.setEditable(false);
         add(emailField);
 
-        // Password
+        // Password (with show/hide button)
         add(new JLabel("New Password:"));
+        JPanel passPanel = new JPanel(new BorderLayout());
         passwordField = new JPasswordField();
-        add(passwordField);
+        passPanel.add(passwordField, BorderLayout.CENTER);
+        showPasswordBtn = new JToggleButton("Show");
+        final char defaultEcho = passwordField.getEchoChar();
+        showPasswordBtn.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (showPasswordBtn.isSelected()) {
+                    passwordField.setEchoChar((char) 0);
+                    showPasswordBtn.setText("Hide");
+                } else {
+                    passwordField.setEchoChar(defaultEcho);
+                    showPasswordBtn.setText("Show");
+                }
+            }
+        });
+        passPanel.add(showPasswordBtn, BorderLayout.EAST);
+        add(passPanel);
+
+        // Confirm Password (with show/hide button)
+        add(new JLabel("Confirm New Password:"));
+        JPanel confirmPanel = new JPanel(new BorderLayout());
+        confirmPasswordField = new JPasswordField();
+        confirmPanel.add(confirmPasswordField, BorderLayout.CENTER);
+        showConfirmBtn = new JToggleButton("Show");
+        final char confirmDefaultEcho = confirmPasswordField.getEchoChar();
+        showConfirmBtn.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (showConfirmBtn.isSelected()) {
+                    confirmPasswordField.setEchoChar((char) 0);
+                    showConfirmBtn.setText("Hide");
+                } else {
+                    confirmPasswordField.setEchoChar(confirmDefaultEcho);
+                    showConfirmBtn.setText("Show");
+                }
+            }
+        });
+        confirmPanel.add(showConfirmBtn, BorderLayout.EAST);
+        add(confirmPanel);
 
         // Update Button
         JButton updateButton = new JButton("Update");
@@ -44,6 +86,8 @@ public class ProfileFrame extends JFrame {
                 updateProfile();
             }
         });
+        // Place the update button spanning two columns by adding an empty label first
+        add(new JLabel());
         add(updateButton);
 
         setVisible(true);
@@ -51,9 +95,15 @@ public class ProfileFrame extends JFrame {
 
     private void updateProfile() {
         String newPassword = new String(passwordField.getPassword());
+        String confirmPassword = new String(confirmPasswordField.getPassword());
 
         if (newPassword.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Password cannot be empty");
+            return;
+        }
+
+        if (!newPassword.equals(confirmPassword)) {
+            JOptionPane.showMessageDialog(this, "Passwords do not match");
             return;
         }
 

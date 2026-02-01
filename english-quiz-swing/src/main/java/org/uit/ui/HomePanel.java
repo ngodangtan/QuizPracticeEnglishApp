@@ -3,6 +3,7 @@ package org.uit.ui;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import org.uit.navigation.AppCoordinator;
 import org.uit.ui.ProfileFrame;
 
 public class HomePanel extends JPanel {
@@ -100,23 +101,18 @@ public class HomePanel extends JPanel {
                 JOptionPane.showMessageDialog(this, "Please enter your English level.");
                 return;
             }
-            // Open loading screen
-            SwingUtilities.invokeLater(() -> {
-                new LoadingFrame(username, level).setVisible(true);
-                homeFrame.dispose();
-            });
+            Window w = SwingUtilities.getWindowAncestor(this);
+            AppCoordinator.getInstance().showLoading(username, level, w);
         });
 
         logoutBtn.addActionListener(e -> {
-            SwingUtilities.invokeLater(() -> {
-                new LoginFrame().setVisible(true);
-                homeFrame.dispose();
-            });
+            Window w = SwingUtilities.getWindowAncestor(this);
+            AppCoordinator.getInstance().showLogin(w);
         });
 
         
         profileBtn.addActionListener(e -> {
-            SwingUtilities.invokeLater(ProfileFrame::new);
+            AppCoordinator.getInstance().showProfile(username, null);
         });
     }
 }

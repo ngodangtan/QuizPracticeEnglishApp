@@ -10,6 +10,8 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.uit.navigation.AppCoordinator;
+
 public class QuizPanel extends JPanel {
 
     private final String username;
@@ -29,7 +31,7 @@ public class QuizPanel extends JPanel {
     private final JButton prevBtn = new JButton("Previous");
     private final JButton nextBtn = new JButton("Next");
     private final JButton submitBtn = new JButton("Submit Quiz");
-    private final JProgressBar progressBar = new JProgressBar(0, questions.size());
+    private JProgressBar progressBar; // initialized in buildHeader to handle zero-size safely
 
     private Timer quizTimer;
     private int timeRemaining = 1200; // 20 minutes in seconds
@@ -38,6 +40,21 @@ public class QuizPanel extends JPanel {
         this.username = username;
         this.level = level;
         this.quizFrame = quizFrame;
+
+        // Handle empty or null API response
+        if (apiQuestions == null || apiQuestions.length == 0) {
+            this.userAnswers = new int[0];
+            setLayout(new BorderLayout());
+            setBorder(new EmptyBorder(22, 22, 22, 22));
+            JLabel noQuestions = new JLabel("No questions available. Returning to home...");
+            noQuestions.setHorizontalAlignment(SwingConstants.CENTER);
+            add(noQuestions, BorderLayout.CENTER);
+            SwingUtilities.invokeLater(() -> {
+                JOptionPane.showMessageDialog(quizFrame, "No questions available. Returning to home.");
+                AppCoordinator.getInstance().showHome(username, quizFrame);
+            });
+            return;
+        }
 
         // Convert API questions to local Question
         for (ApiClient.Question q : apiQuestions) {
@@ -72,9 +89,11 @@ public class QuizPanel extends JPanel {
         timerLabel.setFont(timerLabel.getFont().deriveFont(Font.BOLD, 18f));
         timerLabel.setForeground(Color.RED);
 
-        progressBar.setValue(1);
+        int total = Math.max(1, questions.size());
+        progressBar = new JProgressBar(0, total);
+        progressBar.setValue(Math.min(1, total));
         progressBar.setStringPainted(true);
-        progressBar.setString("Question 1 of " + questions.size());
+        progressBar.setString("Question " + (questions.size() == 0 ? 0 : 1) + " of " + questions.size());
 
         p.add(timerLabel, BorderLayout.WEST);
         p.add(progressBar, BorderLayout.CENTER);
@@ -149,6 +168,7 @@ public class QuizPanel extends JPanel {
     }
 
     private void updateQuestion() {
+        if (questions.isEmpty()) return;
         Question q = questions.get(currentQuestionIndex);
         questionLabel.setText((currentQuestionIndex + 1) + ". " + q.question);
         optionGroup.clearSelection();
@@ -158,7 +178,7 @@ public class QuizPanel extends JPanel {
                 optionButtons[i].setSelected(true);
             }
         }
-        progressBar.setValue(currentQuestionIndex + 1);
+        progressBar.setValue(Math.min(currentQuestionIndex + 1, progressBar.getMaximum()));
         progressBar.setString("Question " + (currentQuestionIndex + 1) + " of " + questions.size());
         prevBtn.setEnabled(currentQuestionIndex > 0);
         nextBtn.setEnabled(currentQuestionIndex < questions.size() - 1);
@@ -197,6 +217,12 @@ public class QuizPanel extends JPanel {
     }
 
     private void submitQuiz() {
+        if (questions.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "No questions to submit.");
+            goToHome();
+            return;
+        }
+
         quizTimer.stop();
         int correct = 0;
         for (int i = 0; i < questions.size(); i++) {
@@ -218,8 +244,7 @@ public class QuizPanel extends JPanel {
 
     private void goToHome() {
         SwingUtilities.invokeLater(() -> {
-            new HomeFrame(username).setVisible(true);
-            quizFrame.dispose();
+            AppCoordinator.getInstance().showHome(username, quizFrame);
         });
     }
 

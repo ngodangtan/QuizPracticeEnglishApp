@@ -1,6 +1,8 @@
 package org.uit.ui;
 
 import org.uit.ApiClient;
+import org.uit.controller.RegisterController;
+import org.uit.navigation.AppCoordinator;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -114,11 +116,8 @@ public class RegisterPanel extends JPanel {
         );
 
         backBtn.addActionListener(e -> {
-            SwingUtilities.invokeLater(() -> {
-                new LoginFrame().setVisible(true);
-                Window w = SwingUtilities.getWindowAncestor(this);
-                if (w != null) w.dispose();
-            });
+            Window w = SwingUtilities.getWindowAncestor(this);
+            AppCoordinator.getInstance().showLogin(w);
         });
 
         createBtn.addActionListener(e -> {
@@ -151,37 +150,30 @@ public class RegisterPanel extends JPanel {
             loadingSpinner.start();
             createBtn.setEnabled(false);
 
-            // Call API
-            new SwingWorker<ApiClient.RegisterResponse, Void>() {
+            // Call API via controller (MVC)
+            RegisterController controller = new RegisterController();
+            controller.register(fullName, username, email, pass, new RegisterController.RegisterListener() {
                 @Override
-                protected ApiClient.RegisterResponse doInBackground() throws Exception {
-                    return ApiClient.register(fullName, username, email, pass);
-                }
+                public void onStart() { /* already started */ }
 
                 @Override
-                protected void done() {
-                    // Hide loading and enable button
+                public void onComplete() {
                     loadingSpinner.setVisible(false);
                     loadingSpinner.stop();
                     createBtn.setEnabled(true);
-
-                    try {
-                        ApiClient.RegisterResponse res = get();
-                        if (res.success) {
-                            SwingUtilities.invokeLater(() -> {
-                                new LoginFrame().setVisible(true);
-
-                                Window w = SwingUtilities.getWindowAncestor(RegisterPanel.this);
-                                if (w != null) w.dispose();
-                            });
-                        } else {
-                            setError(res.message);
-                        }
-                    } catch (InterruptedException | ExecutionException ex) {
-                        setError("Registration failed: " + ex.getCause().getMessage());
-                    }
                 }
-            }.execute();
+
+                @Override
+                public void onSuccess(ApiClient.RegisterResponse.User user) {
+                    Window w = SwingUtilities.getWindowAncestor(RegisterPanel.this);
+                    AppCoordinator.getInstance().showLogin(w);
+                }
+
+                @Override
+                public void onError(String message) {
+                    setError(message);
+                }
+            });
         });
     }
 

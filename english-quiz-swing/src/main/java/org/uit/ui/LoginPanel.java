@@ -1,6 +1,8 @@
 package org.uit.ui;
 
 import org.uit.ApiClient;
+import org.uit.controller.LoginController;
+import org.uit.navigation.AppCoordinator;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -154,52 +156,35 @@ public class LoginPanel extends JPanel {
             loadingSpinner.start();
             loginBtn.setEnabled(false);
 
-            // Call API
-            new SwingWorker<ApiClient.LoginResponse, Void>() {
+            // Call API via controller (MVC)
+            LoginController controller = new LoginController();
+            controller.login(email, pass, new LoginController.LoginListener() {
                 @Override
-                protected ApiClient.LoginResponse doInBackground() throws Exception {
-                    return ApiClient.login(email, pass);
-                }
+                public void onStart() { /* already started */ }
 
                 @Override
-                protected void done() {
-                    // Hide loading and enable button
+                public void onComplete() {
                     loadingSpinner.setVisible(false);
                     loadingSpinner.stop();
                     loginBtn.setEnabled(true);
-
-                    try {
-                        ApiClient.LoginResponse res = get();
-                        if (res.success) {
-                             // ✅ LƯU THÔNG TIN USER VÀO SESSION
-                            Session.setUserId(res.user._id);
-                            Session.setName(res.user.username);
-                            Session.setEmail(res.user.email);
-                            Session.setToken(res.token); // nếu backend trả token
-
-                            SwingUtilities.invokeLater(() -> {
-                                new HomeFrame(res.user.username).setVisible(true);
-
-                                Window w = SwingUtilities.getWindowAncestor(LoginPanel.this);
-                                if (w != null) w.dispose();
-                            });
-                        } else {
-                            setError(res.message);
-                        }
-                    } catch (InterruptedException | ExecutionException ex) {
-                        setError("Login failed: " + ex.getCause().getMessage());
-                    }
                 }
-            }.execute();
+
+                @Override
+                public void onSuccess(ApiClient.LoginResponse res) {
+                    Window w = SwingUtilities.getWindowAncestor(LoginPanel.this);
+                    AppCoordinator.getInstance().showHome(res.user.username, w);
+                }
+
+                @Override
+                public void onError(String message) {
+                    setError(message);
+                }
+            });
         });
 
         registerBtn.addActionListener(e -> {
-            SwingUtilities.invokeLater(() -> {
-                new RegisterFrame().setVisible(true);
-
-                Window w = SwingUtilities.getWindowAncestor(this);
-                if (w != null) w.dispose();
-            });
+            Window w = SwingUtilities.getWindowAncestor(this);
+            AppCoordinator.getInstance().showRegister(w);
         });
     }
 

@@ -1,6 +1,8 @@
 package org.uit.ui;
 
 import org.uit.ApiClient;
+import org.uit.controller.QuizController;
+import org.uit.navigation.AppCoordinator;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -51,31 +53,31 @@ public class LoadingPanel extends JPanel {
     }
 
     private void startLoading() {
-        // Call API to generate quiz
-        new SwingWorker<ApiClient.Question[], Void>() {
+        // Call API via controller (MVC)
+        QuizController controller = new QuizController();
+        controller.generateQuiz(level, new QuizController.QuizListener() {
             @Override
-            protected ApiClient.Question[] doInBackground() throws Exception {
-                return ApiClient.generateQuiz(level);
+            public void onStart() { /* optional: update UI */ }
+
+            @Override
+            public void onComplete() { /* optional */ }
+
+            @Override
+            public void onSuccess(ApiClient.Question[] questions) {
+                if (questions == null || questions.length == 0) {
+                    JOptionPane.showMessageDialog(LoadingPanel.this, "No questions were generated. Please try again.");
+                    AppCoordinator.getInstance().showHome(username, loadingFrame);
+                    return;
+                }
+                AppCoordinator.getInstance().showQuiz(username, level, questions, loadingFrame);
             }
 
             @Override
-            protected void done() {
-                try {
-                    ApiClient.Question[] questions = get();
-                    SwingUtilities.invokeLater(() -> {
-                        new QuizFrame(username, level, questions).setVisible(true);
-                        loadingFrame.dispose();
-                    });
-                } catch (InterruptedException | ExecutionException ex) {
-                    JOptionPane.showMessageDialog(LoadingPanel.this, "Failed to load quiz: " + ex.getCause().getMessage());
-                    // Go back to home
-                    SwingUtilities.invokeLater(() -> {
-                        new HomeFrame(username).setVisible(true);
-                        loadingFrame.dispose();
-                    });
-                }
+            public void onError(String message) {
+                JOptionPane.showMessageDialog(LoadingPanel.this, message);
+                AppCoordinator.getInstance().showHome(username, loadingFrame);
             }
-        }.execute();
+        });
     }
 
     // Custom spinner component
