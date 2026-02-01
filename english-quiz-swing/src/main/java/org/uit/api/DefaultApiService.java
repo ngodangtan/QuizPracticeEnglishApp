@@ -17,4 +17,9 @@ public class DefaultApiService implements ApiService {
     public ApiClient.Question[] generateQuiz(String level) throws Exception {
         return ApiClient.generateQuiz(level);
     }
+
+    @Override
+    public ApiClient.SubmitScoreResponse submitScore(double scorePercent, String token) throws Exception {
+        return ApiClient.submitScore(scorePercent, token);
+    }
 }

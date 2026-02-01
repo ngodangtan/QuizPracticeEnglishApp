@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.uit.navigation.AppCoordinator;
+import org.uit.session.Session;
 
 public class QuizPanel extends JPanel {
 
@@ -231,6 +232,38 @@ public class QuizPanel extends JPanel {
             }
         }
         double percentage = (double) correct / questions.size() * 100;
+        final int correctFinal = correct;
+        final double percentageFinal = percentage;
+
+        // Submit score to API (async), then show result when done
+        String token = Session.getToken();
+        if (token != null && !token.isEmpty()) {
+            new SwingWorker<ApiClient.SubmitScoreResponse, Void>() {
+                @Override
+                protected ApiClient.SubmitScoreResponse doInBackground() throws Exception {
+                    return ApiClient.submitScore(percentageFinal, token);
+                }
+
+                @Override
+                protected void done() {
+                    try {
+                        ApiClient.SubmitScoreResponse res = get();
+                        if (res != null && res.success && res.recentScore != null) {
+                            Session.setRecentScore(res.recentScore);
+                        }
+                    } catch (Exception ignored) {
+                        Session.setRecentScore(String.format("%.0f%%", percentageFinal));
+                    }
+                    showQuizResult(correctFinal, percentageFinal);
+                }
+            }.execute();
+        } else {
+            Session.setRecentScore(String.format("%.0f%%", percentage));
+            showQuizResult(correct, percentage);
+        }
+    }
+
+    private void showQuizResult(int correct, double percentage) {
         String message = "Quiz completed!\nCorrect answers: " + correct + "/" + questions.size() + "\nScore: " + String.format("%.1f", percentage) + "%";
         String[] options = { "Xem lại câu trả lời", "Về trang chủ" };
         int choice = JOptionPane.showOptionDialog(this, message, "Quiz completed", JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, options[1]);

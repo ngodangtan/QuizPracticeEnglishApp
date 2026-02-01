@@ -29,6 +29,7 @@ public class ApiClient {
             public String fullName;
             public String username;
             public String email;
+            public String recentScore;
         }
     }
 
@@ -42,6 +43,7 @@ public class ApiClient {
             public String fullName;
             public String username;
             public String email;
+            public String recentScore;
             public String createdAt;
         }
     }
@@ -135,6 +137,28 @@ public class ApiClient {
         }
     }
 
+    public static class SubmitScoreResponse {
+        public boolean success;
+        public String recentScore;
+    }
 
+    public static SubmitScoreResponse submitScore(double scorePercent, String token) throws IOException {
+        String json = gson.toJson(Map.of("score", scorePercent));
 
+        RequestBody body = RequestBody.create(json, MediaType.get("application/json; charset=utf-8"));
+        Request request = new Request.Builder()
+                .url(BASE_URL + "/api/quiz/submit-score")
+                .post(body)
+                .addHeader("Authorization", "Bearer " + token)
+                .build();
+
+        try (Response response = client.newCall(request).execute()) {
+            if (!response.isSuccessful()) {
+                String err = response.body() != null ? response.body().string() : "no body";
+                throw new IOException("Submit score failed: " + response.code() + " - " + err);
+            }
+            String responseBody = response.body().string();
+            return gson.fromJson(responseBody, SubmitScoreResponse.class);
+        }
+    }
 }

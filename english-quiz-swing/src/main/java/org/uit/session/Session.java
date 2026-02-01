@@ -5,6 +5,7 @@ public class Session {
     private static String name;
     private static String email;
     private static String token;
+    private static String recentScore;
 
     public static String getUserId() { return userId; }
     public static void setUserId(String userId) { Session.userId = userId; }
@@ -17,4 +18,7 @@ public class Session {
 
     public static String getToken() { return token; }
     public static void setToken(String token) { Session.token = token; }
+
+    public static String getRecentScore() { return recentScore; }
+    public static void setRecentScore(String recentScore) { Session.recentScore = recentScore; }
 }
